@@ -89,21 +89,13 @@ def run(wav):
         x,y = interp_pairs(i, [(2,100), (10,100), (10,10), (10,100), (2,100)], lindex)
         see = math.cos((tone_a + pow(i,int(x),int(y))) * math.pi * float(i) / rate)
 
-        k = int(5 * (math.sin(2 * math.pi * float(i) / rate) + 1))
-        mod = pow(i, 10, 10 + k)
-        #see = math.cos((tone_a + mod) * math.pi * float(i) / rate)
-
         low_ey = volume * math.cos(bass_note(i) * math.pi * float(i) / rate)
 
-        j = 0
-        #if lindex / 4.0 < i < lindex * 3.0 / 4:
-            #j = int(1 * (math.cos(0.2 * math.pi * float(i) / rate) + 1))
-        beat_pos = pow(i, 1 + j, int(sample_rate))
-        gate = bass_gate(beat_pos)
+        beat_pos = pow(i, 1, int(sample_rate))
         env = bass_envelope(beat_pos)
 
-        l = unity(ey * a1, env * see * a2, env * low_ey)
-        r = unity(ey * a2, env * see * a1, env * low_ey)
+        l = unity(ey * a1, see * a2, env * low_ey)
+        r = unity(ey * a2, see * a1, env * low_ey)
         wav.write(l, r)
 
 def main():
