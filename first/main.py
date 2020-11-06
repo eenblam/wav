@@ -55,6 +55,30 @@ def bass_note(t):
         return 440
     return 394
 
+def interp_pairs(t, xs, duration):
+    # I think this gets sloppy on the last block,
+    # in the sense that it won't fully interpolate.
+    # Could update it to detect that we're in a (short) last block
+    # and adjust the block_size used for block_ratio accordingly.
+    # It's a trade-off: currently we maintain a consistent linear rate
+
+    # xs should be a list of m pairs
+    # Giving n=m-1 blocks between m indices into the duration, with last at end
+    n = len(xs) - 1
+    # Float division to divide as evenly as possible
+    block_size = float(duration) / n
+    # This becomes an index into xs, so need an int
+    block = int(t / block_size)
+    # using % here since pow() requires an int and we aren't doing crypto
+    block_pos = t % block_size
+    block_ratio = block_pos / block_size
+    # Linear (could try others) interpolation between values at each end of block
+    x1,y1 = xs[block]
+    x2,y2 = xs[block+1]
+    x3 = x1 * (1 - block_ratio) + x2 * block_ratio
+    y3 = y1 * (1 - block_ratio) + y2 * block_ratio
+    return x3, y3
+
 def run(wav):
     rate = float(sample_rate)
     for i in range(int(length_seconds * sample_rate)):
@@ -62,10 +86,8 @@ def run(wav):
         a1 = volume * (math.cos(math.pi * float(i) / rate) + 0.5) / 2
         a2 = volume * (math.sin(2 * math.pi * float(i) / rate) + 0.5) / 2
         ey = math.cos(tone_c * math.pi * float(i) / rate)
-        #TODO interpolate through these values
-        see = math.cos((tone_a + pow(i,2,100)) * math.pi * float(i) / rate)
-        #see = math.cos((tone_a + pow(i,10,100)) * math.pi * float(i) / rate)
-        #see = math.cos((tone_a + pow(i,10,10)) * math.pi * float(i) / rate)
+        x,y = interp_pairs(i, [(2,100), (10,100), (10,10), (10,100), (2,100)], lindex)
+        see = math.cos((tone_a + pow(i,int(x),int(y))) * math.pi * float(i) / rate)
 
         k = int(5 * (math.sin(2 * math.pi * float(i) / rate) + 1))
         mod = pow(i, 10, 10 + k)
@@ -74,8 +96,8 @@ def run(wav):
         low_ey = volume * math.cos(bass_note(i) * math.pi * float(i) / rate)
 
         j = 0
-        if lindex / 4.0 < i < lindex * 3.0 / 4:
-            j = int(1 * (math.cos(0.2 * math.pi * float(i) / rate) + 1))
+        #if lindex / 4.0 < i < lindex * 3.0 / 4:
+            #j = int(1 * (math.cos(0.2 * math.pi * float(i) / rate) + 1))
         beat_pos = pow(i, 1 + j, int(sample_rate))
         gate = bass_gate(beat_pos)
         env = bass_envelope(beat_pos)
