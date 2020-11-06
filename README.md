@@ -14,7 +14,7 @@ Most of these scripts can be run on Linux by doing `./main.py && aplay whatever.
     * Also has some helpfully suggestive bits on basic linear shift invariant (LSI) FX circuit schematics
 
 ## Planned reading
-Still gotta plan the planned reading
+https://ccrma.stanford.edu/~jos/ should take me a while to work through.
 
 ## Fun next steps
 
