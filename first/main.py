@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # Inspired by http://blog.acipo.com/wave-generation-in-python/
 # and https://www.instagram.com/direct.to.wav/
@@ -24,11 +24,11 @@ class Wav():
         self.file.setframerate(sample_rate)
 
     def close(self):
-        self.file.writeframes('')
+        self.file.writeframes(b'\x00')
         self.file.close()
 
     def write(self, l, r):
-        self.file.writeframesraw( struct.pack('<hh', l, r ) )
+        self.file.writeframesraw( struct.pack('<hh', int(l), int(r) ) )
 
 def unity(*args):
     n = len(args)
