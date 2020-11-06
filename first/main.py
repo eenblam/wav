@@ -12,8 +12,10 @@ lindex = sample_rate * length_seconds
 #amplitude = 32767.0
 volume = 16383.0
 
-tone_a = 1760.00  # A
-tone_c =  523.25  # C
+tone_g4 = 392.00
+tone_a4 = 440.00
+tone_c5 = 523.25
+tone_a6 = 1760.00
 
 class Wav():
     def __init__(self, filename):
@@ -52,8 +54,8 @@ def bass_envelope(t):
 def bass_note(t):
     beat_pos = pow(t, 1, int(sample_rate) * 8)
     if beat_pos < sample_rate * 4:
-        return 440
-    return 394
+        return tone_a4
+    return tone_g4
 
 def interp_pairs(t, xs, duration):
     # I think this gets sloppy on the last block,
@@ -85,9 +87,9 @@ def run(wav):
         # Amplitude modulation over 2s. cos and sin to phase shift A and C amplitudes.
         a1 = volume * (math.cos(math.pi * float(i) / rate) + 0.5) / 2
         a2 = volume * (math.sin(2 * math.pi * float(i) / rate) + 0.5) / 2
-        ey = math.cos(tone_c * math.pi * float(i) / rate)
+        ey = math.cos(tone_c5 * math.pi * float(i) / rate)
         x,y = interp_pairs(i, [(2,100), (10,100), (10,10), (10,100), (2,100)], lindex)
-        see = math.cos((tone_a + pow(i,int(x),int(y))) * math.pi * float(i) / rate)
+        see = math.cos((tone_a6 + pow(i,int(x),int(y))) * math.pi * float(i) / rate)
 
         low_ey = volume * math.cos(bass_note(i) * math.pi * float(i) / rate)
 
