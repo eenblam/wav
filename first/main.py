@@ -37,8 +37,8 @@ def unity(*args):
 def bass_gate(t):
     s = sample_rate
     g = 0 < t < s/4 or \
-            (s/2 <= t < 5 * s / 8) or \
-            (3 * s / 4 <= t < 7 * s / 8)
+            (s/2 <= t < 5*s/8) or \
+            (3*s/4 <= t < 7*s/8)
     return int(g)
 
 def bass_envelope(t):
