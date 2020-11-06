@@ -20,3 +20,5 @@ https://ccrma.stanford.edu/~jos/ should take me a while to work through.
 
 * Add a delay or reverb channel to the mix using Bjorn's slides
     * Then add feedback to whichever effect was used
+* Add a constraint setup to enable looping (start and end should match)
+* DSP challenge: write a script that consumes a wav file and generates a video
