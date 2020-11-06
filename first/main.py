@@ -6,7 +6,7 @@
 import wave, struct, math
 
 sample_rate = 44100.0 # hertz
-length_seconds = 30
+length_seconds = 60
 lindex = sample_rate * length_seconds
 
 #amplitude = 32767.0
@@ -22,7 +22,7 @@ class Wav():
         self.name = filename
         self.file = wave.open(filename, 'w')
         self.file.setnchannels(2) # stereo
-        self.file.setsampwidth(2) # ???
+        self.file.setsampwidth(2) # sample width in bytes. 2 bytes for a short.
         self.file.setframerate(sample_rate)
 
     def close(self):
@@ -30,7 +30,13 @@ class Wav():
         self.file.close()
 
     def write(self, l, r):
-        self.file.writeframesraw( struct.pack('<hh', int(l), int(r) ) )
+        try:
+            self.file.writeframesraw( struct.pack('<hh', int(l), int(r) ) )
+        except struct.error as e:
+            print(e)
+            print('l: {} int(l): {}'.format(l, int(l)))
+            print('r: {} int(r): {}'.format(r, int(r)))
+            raise e
 
 def unity(*args):
     n = len(args)
@@ -38,9 +44,7 @@ def unity(*args):
 
 def bass_gate(t):
     s = sample_rate
-    g = 0 < t < s/4 or \
-            (s/2 <= t < 5*s/8) or \
-            (3*s/4 <= t < 7*s/8)
+    g = 0 < t < s/4 or (s/2 <= t < 5*s/8) or (3*s/4 <= t < 7*s/8)
     return int(g)
 
 def bass_envelope(t):
@@ -49,7 +53,7 @@ def bass_envelope(t):
     interval = s / 4
 
     residue = pow(t, 1, int(interval))
-    return (interval - residue) / interval
+    return ((interval - residue) / interval)
 
 def bass_note(t):
     beat_pos = pow(t, 1, int(sample_rate) * 8)
@@ -81,23 +85,41 @@ def interp_pairs(t, xs, duration):
     y3 = y1 * (1 - block_ratio) + y2 * block_ratio
     return x3, y3
 
+def fade_in(t, attack_len, exp=1):
+    if t >= attack_len:
+        return 1
+    return (1 - ((attack_len - t)) / attack_len) ** exp
+
+def fade_out(t, release_len, exp=1):
+    begin = lindex - release_len
+    if t < begin:
+        return 1
+    return ((lindex - t) / release_len) ** exp
+
 def run(wav):
     rate = float(sample_rate)
     for i in range(int(length_seconds * sample_rate)):
         # Amplitude modulation over 2s. cos and sin to phase shift A and C amplitudes.
-        a1 = volume * (math.cos(math.pi * float(i) / rate) + 0.5) / 2
-        a2 = volume * (math.sin(2 * math.pi * float(i) / rate) + 0.5) / 2
-        ey = math.cos(tone_c5 * math.pi * float(i) / rate)
+        amp1 = volume * (math.cos(math.pi * float(i) / rate) + 0.5) / 2
+        amp2 = volume * (math.sin(2 * math.pi * float(i) / rate) + 0.5) / 2
+
+        # Really slow rise in modulation over course of track
+        hum_mod = ((i / lindex) ** 4) * pow(i, 1, 10)
+        hum = math.cos((tone_c5 + hum_mod) * math.pi * float(i) / rate)
+
         x,y = interp_pairs(i, [(2,100), (10,100), (10,10), (10,100), (2,100)], lindex)
-        see = math.cos((tone_a6 + pow(i,int(x),int(y))) * math.pi * float(i) / rate)
+        lead_mod = pow(i, int(x), int(y))
+        lead = math.cos((tone_a6 + lead_mod) * math.pi * float(i) / rate)
+        # Exponential fade in over 6s
+        lead_attack = fade_in(i, 6 * sample_rate, 2)
 
-        low_ey = volume * math.cos(bass_note(i) * math.pi * float(i) / rate)
-
+        bass = volume * math.cos(bass_note(i) * math.pi * float(i) / rate)
         beat_pos = pow(i, 1, int(sample_rate))
         env = bass_envelope(beat_pos)
 
-        l = unity(1.2 * ey * a1, 0.8 * see * a2, env * low_ey)
-        r = unity(1.2 * ey * a2, 0.8 * see * a1, env * low_ey)
+        mix_fade_out = fade_out(i, 10 * sample_rate, 0.75)
+        l = mix_fade_out * unity(1.2 * hum * amp1, lead_attack * 0.8 * lead * amp2, env * bass)
+        r = mix_fade_out * unity(1.2 * hum * amp2, lead_attack * 0.8 * lead * amp1, env * bass)
         wav.write(l, r)
 
 def main():
