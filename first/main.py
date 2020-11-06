@@ -82,7 +82,7 @@ def interp_pairs(t, xs, duration):
 def run(wav):
     rate = float(sample_rate)
     for i in range(int(length_seconds * sample_rate)):
-        # Every 2 seconds. Divide volume in half and shift up by one.
+        # Amplitude modulation over 2s. cos and sin to phase shift A and C amplitudes.
         a1 = volume * (math.cos(math.pi * float(i) / rate) + 0.5) / 2
         a2 = volume * (math.sin(2 * math.pi * float(i) / rate) + 0.5) / 2
         ey = math.cos(tone_c * math.pi * float(i) / rate)
@@ -94,8 +94,8 @@ def run(wav):
         beat_pos = pow(i, 1, int(sample_rate))
         env = bass_envelope(beat_pos)
 
-        l = unity(ey * a1, see * a2, env * low_ey)
-        r = unity(ey * a2, see * a1, env * low_ey)
+        l = unity(1.2 * ey * a1, 0.8 * see * a2, env * low_ey)
+        r = unity(1.2 * ey * a2, 0.8 * see * a1, env * low_ey)
         wav.write(l, r)
 
 def main():
