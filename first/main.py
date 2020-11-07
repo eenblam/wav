@@ -3,7 +3,7 @@
 # Inspired by http://blog.acipo.com/wave-generation-in-python/
 # and https://www.instagram.com/direct.to.wav/
 
-import wave, struct, math
+import itertools, wave, struct, math, random
 
 sample_rate = 44100.0 # hertz
 length_seconds = 60
@@ -16,6 +16,17 @@ tone_g4 = 392.00
 tone_a4 = 440.00
 tone_c5 = 523.25
 tone_a6 = 1760.00
+
+#bass_notes = itertools.cycle([tone_g4, tone_a4, tone_c5, tone_a4])
+def gen_bass_notes(tones):
+    """Random walk through provided list of tones"""
+    i = 0
+    while True:
+        yield tones[i]
+        i = (i + random.randint(-1,1)) % len(tones)
+
+bass_notes = gen_bass_notes([tone_g4, tone_a4, tone_c5, tone_a4])
+current_note = bass_notes.__next__()
 
 class Wav():
     def __init__(self, filename):
@@ -48,25 +59,38 @@ def bass_gate(t):
     return int(g)
 
 def bass_envelope(t):
-    s = sample_rate
-    ratio = 4
-    interval = s / 4
+    # 4bps = 240bpm
+    bps = 4
+    interval = sample_rate / bps
+
 
     residue = pow(t, 1, int(interval))
     return ((interval - residue) / interval)
 
 def bass_note(t):
-    beat_pos = pow(t, 1, int(sample_rate) * 8)
-    if beat_pos < sample_rate * 4:
-        return tone_a4
-    return tone_g4
+    # Chop to 8s bar
+    bar_size = sample_rate * 8
+    bar_pos = pow(t, 1, int(bar_size))
+
+    # Alternate a4 and g4
+    # First half
+    #if bar_pos < sample_rate * 4:
+    #    return tone_a4
+    #return tone_g4
+
+    # Random walk
+    global current
+    if bar_pos % (sample_rate / 4) == 0:
+        current = bass_notes.__next__()
+    return current
 
 def interp_pairs(t, xs, duration):
     # I think this gets sloppy on the last block,
     # in the sense that it won't fully interpolate.
     # Could update it to detect that we're in a (short) last block
     # and adjust the block_size used for block_ratio accordingly.
-    # It's a trade-off: currently we maintain a consistent linear rate
+    # It's a trade-off:
+    # do you want the *rate* your inputs define, or do you want to ultimately reach your final input?
 
     # xs should be a list of m pairs
     # Giving n=m-1 blocks between m indices into the duration, with last at end
