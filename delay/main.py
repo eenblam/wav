@@ -90,14 +90,33 @@ def fade_in(t, attack_len, start=0, exp=1):
     # mid-fade-in
     return (1 - ((attack_len - t)) / attack_len) ** exp
 
+#TODO proper decay
+#TODO (variable) feedback
+#TODO variable delay time
+class Delay():
+    def __init__(self, decay=0.5, max_delay_time=sample_rate):
+        self.max_delay_time = int(max_delay_time)
+        self.dtime = self.max_delay_time
+        self.dbuff = [0] * self.max_delay_time
+        # Managing these separately to enable tape delay later
+        self.w_head = 0
+        self.r_head = 1
+        self.decay = decay
+
+    def send(self, signal, delay_time=None):
+        if delay_time is None:
+            delay_time = self.max_delay_time
+        out = self.dbuff[self.r_head]
+        self.dbuff[self.w_head] = signal * self.decay
+        self.w_head = (self.w_head + 1) % self.dtime
+        self.r_head = (self.r_head + 1) % self.dtime
+        return out
+
+
 def run(wav):
     rate = float(sample_rate)
 
-    dtime = int(rate / 2.5)
-    dbuff = [0] * dtime
-    w_head = 0
-    r_head = 1
-    decay = 0.8
+    d = Delay(max_delay_time=rate / 2.5)
     delay = 0
     for i in range(int(length_seconds * sample_rate)):
         bass = volume * math.cos(bass_note(i) * math.pi * float(i) / rate)
@@ -105,13 +124,10 @@ def run(wav):
         env = bass_envelope(beat_pos)
         bass_out = env * bass
 
+        delay = d.send(bass_out) * fade_in(i, 5*rate, start=3*rate)
         # Wait 3s, then fade in delay over 5s
-        if i > 3 * rate:
-            delay = dbuff[r_head] * fade_in(i, 5*rate, start=3*rate)
-
-        dbuff[w_head] = bass_out * decay
-        w_head = (w_head + 1) % dtime
-        r_head = (r_head + 1) % dtime
+        if i < 3 * rate:
+            delay = 0
 
         l = unity(bass_out, delay)
         r = unity(bass_out, delay)
