@@ -14,16 +14,8 @@ tone_a4 = 440.00
 tone_c5 = 523.25
 tone_a6 = 1760.00
 
-def gen_bass_notes(tones):
-    """Random walk through provided list of tones"""
-    i = 0
-    while True:
-        yield tones[i]
-        i = (i + random.randint(-1,1)) % len(tones)
-
-bass_notes = gen_bass_notes([tone_g4, tone_a4, tone_c5, tone_a4])
+bass_notes = itertools.cycle([tone_g4, tone_a4, tone_c5, tone_a4])
 current_note = bass_notes.__next__()
-#bass_notes = itertools.cycle([tone_g4, tone_a4, tone_c5, tone_a4])
 
 class Wav():
     def __init__(self, filename):
@@ -142,17 +134,15 @@ def run(wav):
         env = bass_envelope(beat_pos)
         bass_out = env * bass
 
-        if i > sample_rate * 4:
-            bass_out = 0
+        dt = int(interp(i, start=rate*0.8, end=rate*0.4, begin_time=rate*3, finish_time=rate*7, exp=2))
 
-        dt = int(interp(i, start=rate*0.8, end=rate*0.01, begin_time=rate*3, finish_time=rate*7, exp=2))
         # Wait 1s, then fade in delay over 1s
         delay = d.send(bass_out, feedback=0.8, delay_time=dt) * fade_in(i, 1*rate, start=1*rate)
         if i < rate:
             delay = 0
 
-        l = unity(bass_out, delay)
-        r = unity(bass_out, delay)
+        l = unity(bass_out, 0.8 * delay)
+        r = unity(bass_out, 0.8 * delay)
         wav.write(l, r)
 
 def main():
