@@ -79,6 +79,17 @@ def bass_note(t):
         current = bass_notes.__next__()
     return current
 
+def fade_in(t, attack_len, start=0, exp=1):
+    t -= start
+    # fade-in isn't scheduled yet
+    if t < 0:
+        return 0
+    # fade-in complete
+    if t >= attack_len:
+        return 1
+    # mid-fade-in
+    return (1 - ((attack_len - t)) / attack_len) ** exp
+
 def run(wav):
     rate = float(sample_rate)
 
@@ -87,13 +98,17 @@ def run(wav):
     w_head = 0
     r_head = 1
     decay = 0.8
+    delay = 0
     for i in range(int(length_seconds * sample_rate)):
         bass = volume * math.cos(bass_note(i) * math.pi * float(i) / rate)
         beat_pos = pow(i, 1, int(sample_rate))
         env = bass_envelope(beat_pos)
         bass_out = env * bass
 
-        delay = dbuff[r_head]
+        # Wait 3s, then fade in delay over 5s
+        if i > 3 * rate:
+            delay = dbuff[r_head] * fade_in(i, 5*rate, start=3*rate)
+
         dbuff[w_head] = bass_out * decay
         w_head = (w_head + 1) % dtime
         r_head = (r_head + 1) % dtime
