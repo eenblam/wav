@@ -57,7 +57,7 @@ def bass_envelope(t):
     interval = sample_rate / bps
 
     residue = pow(t, 1, int(interval))
-    attack = interval / 25.0
+    attack = interval / (100.0 / bps)
     if residue < attack:
         return 1 - ((attack - residue) / attack)
     return ((interval - residue) / interval) ** 1.5
@@ -90,7 +90,6 @@ def fade_in(t, attack_len, start=0, exp=1):
     # mid-fade-in
     return (1 - ((attack_len - t)) / attack_len) ** exp
 
-#TODO proper decay
 #TODO (variable) feedback
 #TODO variable delay time
 class Delay():
@@ -99,15 +98,16 @@ class Delay():
         self.dtime = self.max_delay_time
         self.dbuff = [0] * self.max_delay_time
         # Managing these separately to enable tape delay later
-        self.w_head = 0
-        self.r_head = 1
+        self.r_head = 0
+        self.w_head = self.max_delay_time - 1
         self.decay = decay
 
     def send(self, signal, delay_time=None):
         if delay_time is None:
             delay_time = self.max_delay_time
         out = self.dbuff[self.r_head]
-        self.dbuff[self.w_head] = signal * self.decay
+        self.dbuff[self.w_head] += signal
+        self.dbuff[self.w_head] *= self.decay
         self.w_head = (self.w_head + 1) % self.dtime
         self.r_head = (self.r_head + 1) % self.dtime
         return out
@@ -116,7 +116,7 @@ class Delay():
 def run(wav):
     rate = float(sample_rate)
 
-    d = Delay(max_delay_time=rate / 2.5)
+    d = Delay(max_delay_time=rate * 1.5)
     delay = 0
     for i in range(int(length_seconds * sample_rate)):
         bass = volume * math.cos(bass_note(i) * math.pi * float(i) / rate)
