@@ -13,7 +13,7 @@ from wav import tones as tone
 import itertools, math
 
 sample_rate = 44100.0 # hertz
-length_seconds = 20
+length_seconds = 60
 lindex = sample_rate * length_seconds
 
 volume = 32767.0
@@ -35,13 +35,6 @@ def bass_note(t):
     bar_size = sample_rate * 8
     bar_pos = pow(t, 1, int(bar_size))
 
-    # Alternate a4 and g4
-    # First half
-    #if bar_pos < sample_rate * 4:
-    #    return tone.a4
-    #return tone.g4
-
-    # Random walk
     global current
     if bar_pos % (sample_rate / 4) == 0:
         current = bass_notes.__next__()
