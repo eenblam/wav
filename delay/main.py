@@ -25,7 +25,6 @@ class Wav():
         self.file.setframerate(sample_rate)
 
     def close(self):
-        #self.file.writeframes(b'\x00\x00\x00\x00')
         self.file.writeframes(b'\x00')
         self.file.close()
 
