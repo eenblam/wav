@@ -18,7 +18,7 @@ lindex = sample_rate * length_seconds
 
 volume = 32767.0
 
-bass_notes = itertools.cycle([tone.g4, tone.a4, tone.c5, tone.a4])
+bass_notes = itertools.cycle([tone.G4, tone.A4, tone.C5, tone.A4])
 current_note = bass_notes.__next__()
 
 def bass_envelope(t):
@@ -49,11 +49,11 @@ def run(wav):
 
         # Really slow rise in modulation over course of track
         hum_mod = ((i / lindex) ** 4) * pow(i, 1, 10)
-        hum = math.cos((tone.c5 + hum_mod) * math.pi * float(i) / rate)
+        hum = math.cos((tone.C5 + hum_mod) * math.pi * float(i) / rate)
 
         x,y = interp_pairs(i, [(2,100), (10,100), (10,10), (10,100), (2,100)], lindex)
         lead_mod = pow(i, int(x), int(y))
-        lead = math.cos((tone.a6 + lead_mod) * math.pi * float(i) / rate)
+        lead = math.cos((tone.A6 + lead_mod) * math.pi * float(i) / rate)
 
         bass = volume * math.cos(bass_note(i) * math.pi * float(i) / rate)
         beat_pos = pow(i, 1, int(sample_rate))

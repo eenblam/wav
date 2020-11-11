@@ -17,7 +17,7 @@ lindex = sample_rate * length_seconds
 
 volume = 32767.0
 
-bass_notes = itertools.cycle([tone.g4, tone.a4, tone.c5, tone.a4])
+bass_notes = itertools.cycle([tone.G4, tone.A4, tone.C5, tone.A4])
 current_note = bass_notes.__next__()
 
 def bass_envelope(t):
@@ -35,12 +35,6 @@ def bass_note(t):
     # Chop to 8s bar
     bar_size = sample_rate * 8
     bar_pos = pow(t, 1, int(bar_size))
-
-    # Alternate a4 and g4
-    # First half
-    #if bar_pos < sample_rate * 4:
-    #    return tone.a4
-    #return tone.g4
 
     # Random walk
     global current
