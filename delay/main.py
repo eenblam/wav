@@ -6,8 +6,7 @@ sample_rate = 44100.0 # hertz
 length_seconds = 20
 lindex = sample_rate * length_seconds
 
-#amplitude = 32767.0
-volume = 16383.0
+volume = 32767.0
 
 tone_g4 = 392.00
 tone_a4 = 440.00
